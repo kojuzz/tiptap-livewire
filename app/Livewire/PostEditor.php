@@ -8,7 +8,11 @@ class PostEditor extends Component
 {
     public $content = '';
     public function save() {
-        dd($this->content);
+        $this->content = $this->content;
+    }
+    public function clear() {
+        $this->reset('content');
+        return $this->redirect('/', navigate: true);
     }
     public function render()
     {

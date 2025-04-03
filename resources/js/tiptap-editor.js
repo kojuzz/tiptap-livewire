@@ -1,4 +1,4 @@
-
+// tiptap-editor.js
 import { Editor } from 'https://esm.sh/@tiptap/core@2.6.6';
 import StarterKit from 'https://esm.sh/@tiptap/starter-kit@2.6.6';
 import Highlight from 'https://esm.sh/@tiptap/extension-highlight@2.6.6';
@@ -10,58 +10,52 @@ import YouTube from 'https://esm.sh/@tiptap/extension-youtube@2.6.6';
 import TextStyle from 'https://esm.sh/@tiptap/extension-text-style@2.6.6';
 import FontFamily from 'https://esm.sh/@tiptap/extension-font-family@2.6.6';
 import { Color } from 'https://esm.sh/@tiptap/extension-color@2.6.6';
-import Bold from 'https://esm.sh/@tiptap/extension-bold@2.6.6'; // Import the Bold extension
+import Bold from 'https://esm.sh/@tiptap/extension-bold@2.6.6';
 
+let editor = null; // Editor instance ကို global သိမ်းမယ်
 
-window.addEventListener('load', function() {
-    if (document.getElementById("wysiwyg-example")) {
+function initializeEditor() {
+    // အရင်က editor ရှိရင် ဖျက်ပစ်ပါ
+    if (editor) {
+        editor.destroy();
+    }
 
+    // Custom Extensions တွေ ပြန်သတ်မှတ်ပါ
     const FontSizeTextStyle = TextStyle.extend({
         addAttributes() {
             return {
-            fontSize: {
-                default: null,
-                parseHTML: element => element.style.fontSize,
-                renderHTML: attributes => {
-                if (!attributes.fontSize) {
-                    return {};
-                }
-                return { style: 'font-size: ' + attributes.fontSize };
+                fontSize: {
+                    default: null,
+                    parseHTML: element => element.style.fontSize,
+                    renderHTML: attributes => {
+                        if (!attributes.fontSize) return {};
+                        return { style: `font-size: ${attributes.fontSize}` };
+                    },
                 },
-            },
             };
         },
     });
+
     const CustomBold = Bold.extend({
-        // Override the renderHTML method
-        renderHTML({ mark, HTMLAttributes }) {
+        renderHTML({ HTMLAttributes }) {
             const { style, ...rest } = HTMLAttributes;
-
-            // Merge existing styles with font-weight
-            const newStyle = 'font-weight: bold;' + (style ? ' ' + style : '');
-
-            return ['span', { ...rest, style: newStyle.trim() }, 0];
+            const newStyle = `font-weight: bold; ${style || ''}`.trim();
+            return ['span', { ...rest, style: newStyle }, 0];
         },
-        // Ensure it doesn't exclude other marks
         addOptions() {
-            return {
-                ...this.parent?.(),
-                HTMLAttributes: {},
-            };
+            return { ...this.parent?.(), HTMLAttributes: {} };
         },
     });
-    // tip tap editor setup
-    const editor = new Editor({
+
+    // Editor အသစ်စပါ
+    editor = new Editor({
         element: document.querySelector('#wysiwyg-example'),
         extensions: [
             StarterKit.configure({
                 textStyle: false,
                 bold: false,
-                marks: {
-                    bold: false,
-                },
+                marks: { bold: false },
             }),
-            // Include the custom Bold extension
             CustomBold,
             TextStyle,
             Color,
@@ -74,13 +68,11 @@ window.addEventListener('load', function() {
                 autolink: true,
                 defaultProtocol: 'https',
             }),
-            TextAlign.configure({
-                types: ['heading', 'paragraph'],
-            }),
+            TextAlign.configure({ types: ['heading', 'paragraph'] }),
             Image,
             YouTube,
         ],
-        content: '<p>Flowbite is an <strong>open-source library of UI components</strong> based on the utility-first Tailwind CSS framework featuring dark mode support, a Figma design system, and more.</p><p>It includes all of the commonly used components that a website requires, such as buttons, dropdowns, navigation bars, modals, datepickers, advanced charts and the list goes on.</p><p>Here is an example of a button component:</p><code>&#x3C;button type=&#x22;button&#x22; class=&#x22;text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800&#x22;&#x3E;Default&#x3C;/button&#x3E;</code><p>Learn more about all components from the <a href="https://flowbite.com/docs/getting-started/introduction/">Flowbite Docs</a>.</p>',
+        content: '<p>Sample Content</p>', // မူလ content
         editorProps: {
             attributes: {
                 class: 'format lg:format-lg dark:format-invert focus:outline-none format-blue max-w-none',
@@ -89,145 +81,166 @@ window.addEventListener('load', function() {
         onUpdate: () => {
             const content = editor.getHTML();
             document.getElementById('editorContent').value = content;
-            // Livewire ကို update လုပ်ဖို့ event trigger လုပ်ပါ
             document.getElementById('editorContent').dispatchEvent(new Event('input'));
         },
         onCreate: () => {
-            // Editor စဖွင့်တဲ့အခါ initial content ကို သိမ်းပါ
             document.getElementById('editorContent').value = editor.getHTML();
             document.getElementById('editorContent').dispatchEvent(new Event('input'));
         }
     });
 
+    // ခလုတ်တွေနဲ့ Event Listeners တွေ ချိတ်ဆက်ပါ
+    const setupEventListeners = () => {
+        document.getElementById('toggleBoldButton').addEventListener('click', () => editor.chain().focus().toggleBold().run());
+        document.getElementById('toggleItalicButton').addEventListener('click', () => editor.chain().focus().toggleItalic().run());
+        // ... တခြား event listeners တွေ အကုန်ထည့်ပါ ...
+        document.getElementById('toggleUnderlineButton').addEventListener('click', () => editor.chain().focus().toggleUnderline().run());
+        document.getElementById('toggleStrikeButton').addEventListener('click', () => editor.chain().focus().toggleStrike().run());
 
-    // set up custom event listeners for the buttons
-    document.getElementById('toggleBoldButton').addEventListener('click', () => editor.chain().focus().toggleBold().run());
-    document.getElementById('toggleItalicButton').addEventListener('click', () => editor.chain().focus().toggleItalic().run());
-    document.getElementById('toggleUnderlineButton').addEventListener('click', () => editor.chain().focus().toggleUnderline().run());
-    document.getElementById('toggleStrikeButton').addEventListener('click', () => editor.chain().focus().toggleStrike().run());
-    document.getElementById('toggleHighlightButton').addEventListener('click', () => {
-    const isHighlighted = editor.isActive('highlight');
-    // when using toggleHighlight(), judge if is is already highlighted.
-    editor.chain().focus().toggleHighlight({
-        color: isHighlighted ? undefined : '#ffc078' // if is already highlighted，unset the highlight color
-    }).run();
-    });
+        document.getElementById('toggleHighlightButton').addEventListener('click', () => {
+            const isHighlighted = editor.isActive('highlight');
+            // when using toggleHighlight(), judge if is is already highlighted.
+            editor.chain().focus().toggleHighlight({
+                color: isHighlighted ? undefined : '#ffc078' // if is already highlighted，unset the highlight color
+            }).run();
+        });
 
-    document.getElementById('toggleLinkButton').addEventListener('click', () => {
-        const url = window.prompt('Enter image URL:', 'https://flowbite.com');
-        editor.chain().focus().toggleLink({ href: url }).run();
-    });
-    document.getElementById('removeLinkButton').addEventListener('click', () => {
-        editor.chain().focus().unsetLink().run()
-    });
-    document.getElementById('toggleCodeButton').addEventListener('click', () => {
-        editor.chain().focus().toggleCode().run();
-    })
+        document.getElementById('toggleLinkButton').addEventListener('click', () => {
+            const url = window.prompt('Enter image URL:', 'https://flowbite.com');
+            editor.chain().focus().toggleLink({ href: url }).run();
+        });
 
-    document.getElementById('toggleLeftAlignButton').addEventListener('click', () => {
-        editor.chain().focus().setTextAlign('left').run();
-    });
-    document.getElementById('toggleCenterAlignButton').addEventListener('click', () => {
-        editor.chain().focus().setTextAlign('center').run();
-    });
-    document.getElementById('toggleRightAlignButton').addEventListener('click', () => {
-        editor.chain().focus().setTextAlign('right').run();
-    });
-    document.getElementById('toggleListButton').addEventListener('click', () => {
-       editor.chain().focus().toggleBulletList().run();
-    });
-    document.getElementById('toggleOrderedListButton').addEventListener('click', () => {
-        editor.chain().focus().toggleOrderedList().run();
-    });
-    document.getElementById('toggleBlockquoteButton').addEventListener('click', () => {
-        editor.chain().focus().toggleBlockquote().run();
-    });
-    document.getElementById('toggleHRButton').addEventListener('click', () => {
-        editor.chain().focus().setHorizontalRule().run();
-    });
-    document.getElementById('addImageButton').addEventListener('click', () => {
-        const url = window.prompt('Enter image URL:', 'https://placehold.co/600x400');
-        if (url) {
-            editor.chain().focus().setImage({ src: url }).run();
-        }
-    });
-    document.getElementById('addVideoButton').addEventListener('click', () => {
-        const url = window.prompt('Enter YouTube URL:', 'https://www.youtube.com/watch?v=KaLxCiilHns');
-        if (url) {
-            editor.commands.setYoutubeVideo({
-                src: url,
-                width: 640,
-                height: 480,
-            })
-        }
-    });
+        document.getElementById('removeLinkButton').addEventListener('click', () => {
+            editor.chain().focus().unsetLink().run()
+        });
 
-    // typography dropdown
-    const typographyDropdown = FlowbiteInstances.getInstance('Dropdown', 'typographyDropdown');
+        document.getElementById('toggleCodeButton').addEventListener('click', () => {
+            editor.chain().focus().toggleCode().run();
+        })
 
-    document.getElementById('toggleParagraphButton').addEventListener('click', () => {
-        editor.chain().focus().setParagraph().run();
-        typographyDropdown.hide();
-    });
-    
-    document.querySelectorAll('[data-heading-level]').forEach((button) => {
-        button.addEventListener('click', () => {
-            const level = button.getAttribute('data-heading-level');
-            editor.chain().focus().toggleHeading({ level: parseInt(level) }).run()
+        document.getElementById('toggleLeftAlignButton').addEventListener('click', () => {
+            editor.chain().focus().setTextAlign('left').run();
+        });
+
+        document.getElementById('toggleCenterAlignButton').addEventListener('click', () => {
+            editor.chain().focus().setTextAlign('center').run();
+        });
+
+        document.getElementById('toggleRightAlignButton').addEventListener('click', () => {
+            editor.chain().focus().setTextAlign('right').run();
+        });
+
+        document.getElementById('toggleListButton').addEventListener('click', () => {
+            editor.chain().focus().toggleBulletList().run();
+        });
+        document.getElementById('toggleOrderedListButton').addEventListener('click', () => {
+            editor.chain().focus().toggleOrderedList().run();
+        });
+        document.getElementById('toggleBlockquoteButton').addEventListener('click', () => {
+            editor.chain().focus().toggleBlockquote().run();
+        });
+        document.getElementById('toggleHRButton').addEventListener('click', () => {
+            editor.chain().focus().setHorizontalRule().run();
+        });
+        document.getElementById('addImageButton').addEventListener('click', () => {
+            const url = window.prompt('Enter image URL:', 'https://placehold.co/600x400');
+            if (url) {
+                editor.chain().focus().setImage({ src: url }).run();
+            }
+        });
+        document.getElementById('addVideoButton').addEventListener('click', () => {
+            const url = window.prompt('Enter YouTube URL:', 'https://www.youtube.com/watch?v=KaLxCiilHns');
+            if (url) {
+                editor.commands.setYoutubeVideo({
+                    src: url,
+                    width: 640,
+                    height: 480,
+                })
+            }
+        });
+    };
+
+    setupEventListeners();
+
+    // Flowbite Dropdown တွေအတွက်
+    const setupFlowbiteDropdowns = () => {
+        const typographyDropdown = FlowbiteInstances.getInstance('Dropdown', 'typographyDropdown');
+        document.getElementById('toggleParagraphButton').addEventListener('click', () => {
+            editor.chain().focus().setParagraph().run();
             typographyDropdown.hide();
         });
-    });
-
-    const textSizeDropdown = FlowbiteInstances.getInstance('Dropdown', 'textSizeDropdown');
-
-    // Loop through all elements with the data-text-size attribute
-    document.querySelectorAll('[data-text-size]').forEach((button) => {
-        button.addEventListener('click', () => {
-            const fontSize = button.getAttribute('data-text-size');
-
-            // Apply the selected font size via pixels using the TipTap editor chain
-            editor.chain().focus().setMark('textStyle', { fontSize }).run();
-
-            // Hide the dropdown after selection
-            textSizeDropdown.hide();
+        // ... တခြား dropdown တွေ ...
+        document.querySelectorAll('[data-heading-level]').forEach((button) => {
+            button.addEventListener('click', () => {
+                const level = button.getAttribute('data-heading-level');
+                editor.chain().focus().toggleHeading({ level: parseInt(level) }).run()
+                typographyDropdown.hide();
+            });
         });
-    });
 
-    // Listen for color picker changes
-    const colorPicker = document.getElementById('color');
-    colorPicker.addEventListener('input', (event) => {
-        const selectedColor = event.target.value;
+        const textSizeDropdown = FlowbiteInstances.getInstance('Dropdown', 'textSizeDropdown');
 
-        // Apply the selected color to the selected text
-        editor.chain().focus().setColor(selectedColor).run();
-    })
+        // Loop through all elements with the data-text-size attribute
+        document.querySelectorAll('[data-text-size]').forEach((button) => {
+            button.addEventListener('click', () => {
+                const fontSize = button.getAttribute('data-text-size');
 
-    document.querySelectorAll('[data-hex-color]').forEach((button) => {
-        button.addEventListener('click', () => {
-            const selectedColor = button.getAttribute('data-hex-color');
+                // Apply the selected font size via pixels using the TipTap editor chain
+                editor.chain().focus().setMark('textStyle', { fontSize }).run();
+
+                // Hide the dropdown after selection
+                textSizeDropdown.hide();
+            });
+        });
+
+        // Listen for color picker changes
+        const colorPicker = document.getElementById('color');
+        colorPicker.addEventListener('input', (event) => {
+            const selectedColor = event.target.value;
 
             // Apply the selected color to the selected text
             editor.chain().focus().setColor(selectedColor).run();
+        })
+
+        document.querySelectorAll('[data-hex-color]').forEach((button) => {
+            button.addEventListener('click', () => {
+                const selectedColor = button.getAttribute('data-hex-color');
+
+                // Apply the selected color to the selected text
+                editor.chain().focus().setColor(selectedColor).run();
+            });
         });
-    });
 
-    document.getElementById('reset-color').addEventListener('click', () => {
-        editor.commands.unsetColor();
-    })
+        document.getElementById('reset-color').addEventListener('click', () => {
+            editor.commands.unsetColor();
+        })
 
-    const fontFamilyDropdown = FlowbiteInstances.getInstance('Dropdown', 'fontFamilyDropdown');
+        const fontFamilyDropdown = FlowbiteInstances.getInstance('Dropdown', 'fontFamilyDropdown');
 
-    // Loop through all elements with the data-font-family attribute
-    document.querySelectorAll('[data-font-family]').forEach((button) => {
-        button.addEventListener('click', () => {
-            const fontFamily = button.getAttribute('data-font-family');
+        // Loop through all elements with the data-font-family attribute
+        document.querySelectorAll('[data-font-family]').forEach((button) => {
+            button.addEventListener('click', () => {
+                const fontFamily = button.getAttribute('data-font-family');
 
-            // Apply the selected font size via pixels using the TipTap editor chain
-            editor.chain().focus().setFontFamily(fontFamily).run();
+                // Apply the selected font size via pixels using the TipTap editor chain
+                editor.chain().focus().setFontFamily(fontFamily).run();
 
-            // Hide the dropdown after selection
-            fontFamilyDropdown.hide();
+                // Hide the dropdown after selection
+                fontFamilyDropdown.hide();
+            });
         });
-    });
+    };
+
+    setupFlowbiteDropdowns();
 }
-})
+
+// Livewire Events တွေအတွက်
+document.addEventListener('livewire:init', initializeEditor);
+document.addEventListener('livewire:navigated', initializeEditor);
+
+// ပထမဆုံး Page Load အတွက်
+document.addEventListener('DOMContentLoaded', () => {
+    if (document.getElementById("wysiwyg-example")) {
+        initializeEditor();
+    }
+});
