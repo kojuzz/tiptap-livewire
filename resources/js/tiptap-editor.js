@@ -15,6 +15,7 @@ import Bold from 'https://esm.sh/@tiptap/extension-bold@2.6.6';
 let editor = null; // Editor instance ကို global သိမ်းမယ်
 
 function initializeEditor() {
+
     // အရင်က editor ရှိရင် ဖျက်ပစ်ပါ
     if (editor) {
         editor.destroy();
@@ -57,7 +58,7 @@ function initializeEditor() {
                 marks: { bold: false },
             }),
             CustomBold,
-            TextStyle,
+            // TextStyle,
             Color,
             FontSizeTextStyle,
             FontFamily,
@@ -72,7 +73,7 @@ function initializeEditor() {
             Image,
             YouTube,
         ],
-        content: '<p>Sample Content</p>', // မူလ content
+        content: '<h2>Hello,</h2><p>You can <b>delete</b> the text here and try writing whatever you like.</p><ol><li><p>List items</p></li><li><p>Paragraph ...</p></li></ol>', // မူလ content
         editorProps: {
             attributes: {
                 class: 'format lg:format-lg dark:format-invert focus:outline-none format-blue max-w-none',
@@ -91,6 +92,7 @@ function initializeEditor() {
 
     // ခလုတ်တွေနဲ့ Event Listeners တွေ ချိတ်ဆက်ပါ
     const setupEventListeners = () => {
+        
         document.getElementById('toggleBoldButton').addEventListener('click', () => editor.chain().focus().toggleBold().run());
         document.getElementById('toggleItalicButton').addEventListener('click', () => editor.chain().focus().toggleItalic().run());
         // ... တခြား event listeners တွေ အကုန်ထည့်ပါ ...
@@ -164,6 +166,7 @@ function initializeEditor() {
 
     // Flowbite Dropdown တွေအတွက်
     const setupFlowbiteDropdowns = () => {
+        
         const typographyDropdown = FlowbiteInstances.getInstance('Dropdown', 'typographyDropdown');
         document.getElementById('toggleParagraphButton').addEventListener('click', () => {
             editor.chain().focus().setParagraph().run();
